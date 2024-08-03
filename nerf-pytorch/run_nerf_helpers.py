@@ -99,7 +99,7 @@ class NeRF(nn.Module):
         for i, l in enumerate(self.pts_linears):
             h = self.pts_linears[i](h)
             h = F.relu(h)
-            if i in self.skips:
+            if i in self.skips and i != len(self.pts_linears) - 1: # modify
                 h = torch.cat([input_pts, h], -1)
 
         if self.use_viewdirs:
