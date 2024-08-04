@@ -711,10 +711,15 @@ def train():
     # writer = SummaryWriter(os.path.join(basedir, 'summaries', expname))
     
     start = start + 1
-    time0 = time.time() # modify
+    psnr_file = os.path.join(basedir, expname, 'psnrs.json') # modify
     psnrs = [] # modify
+    runtime = 0 # modify
+    if os.path.exists(psnr_file): # modify
+        with open(psnr_file) as file: # modify
+            psnrs = json.load(file) # modify
+            runtime = psnrs[-1][0] # modify
     for i in trange(start, N_iters):
-        # time0 = time.time() # modify
+        time0 = time.time()
 
         # Sample random ray batch
         if use_batching:
@@ -791,7 +796,8 @@ def train():
         ################################
 
         dt = time.time()-time0
-        psnrs.append((dt, psnr.item())) # modify
+        runtime += dt # modify
+        psnrs.append((runtime, psnr.item())) # modify
         # print(f"Step: {global_step}, Loss: {loss}, Time: {dt}")
         #####           end            #####
 
@@ -805,6 +811,9 @@ def train():
                 'optimizer_state_dict': optimizer.state_dict(),
             }, path)
             print('Saved checkpoints at', path)
+            psnr_file = os.path.join(basedir, expname, 'psnrs.json') # modify
+            with open(psnr_file, 'w') as file: # modify
+                json.dump(psnrs, file) # modify
 
         if i%args.i_video==0 and i > 0:
             # Turn on testing mode
@@ -830,7 +839,6 @@ def train():
     psnr_file = os.path.join(basedir, expname, 'psnrs.json') # modify
     with open(psnr_file, 'w') as file: # modify
         json.dump(psnrs, file) # modify
-
 
 if __name__=='__main__':
     torch.set_default_tensor_type('torch.cuda.FloatTensor')

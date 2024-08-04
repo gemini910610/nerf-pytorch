@@ -701,7 +701,6 @@ def train():
         rays_rgb = torch.Tensor(rays_rgb).to(device)
 
 
-    runtime = args.runtime # modify
     print('Begin')
     print('TRAIN views are', i_train)
     print('TEST views are', i_test)
@@ -711,13 +710,18 @@ def train():
     # writer = SummaryWriter(os.path.join(basedir, 'summaries', expname))
     
     start = start + 1
-    time0 = time.time() # modify
+    psnr_file = os.path.join(basedir, expname, 'psnrs.json') # modify
     psnrs = [] # modify
+    runtime = 0 # modify
+    if os.path.exists(psnr_file): # modify
+        with open(psnr_file) as file: # modify
+            psnrs = json.load(file) # modify
+            runtime = psnrs[-1][0] # modify
     
     i = 0 # modify
     while True: # modify
         i += 1 # modify
-        # time0 = time.time() # modify
+        time0 = time.time()
 
         # Sample random ray batch
         if use_batching:
@@ -794,15 +798,30 @@ def train():
         ################################
 
         dt = time.time()-time0
-        psnrs.append((dt, psnr.item())) # modify
+        runtime += dt # modify
+        psnrs.append((runtime, psnr.item())) # modify
         # print(f"Step: {global_step}, Loss: {loss}, Time: {dt}")
         #####           end            #####
 
         if i%args.i_print==0:
             tqdm.write(f"[TRAIN] Iter: {i} Loss: {loss.item()}  PSNR: {psnr.item()}")
 
+        # Rest is logging
+        if i%args.i_weights==0:
+            path = os.path.join(basedir, expname, '{:06d}.tar'.format(i))
+            torch.save({
+                'global_step': global_step,
+                'network_fn_state_dict': render_kwargs_train['network_fn'].state_dict(),
+                'network_fine_state_dict': render_kwargs_train['network_fine'].state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
+            }, path)
+            print('Saved checkpoints at', path)
+            psnr_file = os.path.join(basedir, expname, 'psnrs.json') # modify
+            with open(psnr_file, 'w') as file: # modify
+                json.dump(psnrs, file) # modify
+
         global_step += 1
-        if dt >= runtime: # modify
+        if runtime >= args.runtime: # modify
             with torch.no_grad():
                 rgbs, disps = render_path(render_poses, hwf, K, args.chunk, render_kwargs_test)
             print('Done, saving', rgbs.shape, disps.shape)
