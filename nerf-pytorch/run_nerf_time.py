@@ -822,12 +822,6 @@ def train():
 
         global_step += 1
         if runtime >= args.runtime: # modify
-            with torch.no_grad():
-                rgbs, disps = render_path(render_poses, hwf, K, args.chunk, render_kwargs_test)
-            print('Done, saving', rgbs.shape, disps.shape)
-            moviebase = os.path.join(basedir, expname, '{}_spiral_{:06d}_'.format(expname, i))
-            imageio.mimwrite(moviebase + 'rgb.mp4', to8b(rgbs), fps=30, quality=8)
-            imageio.mimwrite(moviebase + 'disp.mp4', to8b(disps / np.max(disps)), fps=30, quality=8)
             break # modify
     psnr_file = os.path.join(basedir, expname, 'psnrs.json') # modify
     with open(psnr_file, 'w') as file: # modify
